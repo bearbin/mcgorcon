@@ -110,11 +110,11 @@ func depacketise(r io.Reader) (header, []byte) {
 		panic(err)
 	}
 	payload := make([]byte, head.Size-8)
-	_, err = r.Read(payload)
+	_, err = io.ReadFull(r, payload)
 	if err != nil {
 		panic(err)
 	}
-	return head, payload
+	return head, payload[:len(payload)-2]
 }
 
 // requestID returns a random positive integer to use as the request ID for an RCON packet.
