@@ -14,7 +14,7 @@ import (
 
 const (
 	PACKET_TYPE_COMMAND  int32 = 2
-	PACKET_TYPE_LOGIN    int32 = 3
+	PACKET_TYPE_AUTH     int32 = 3
 	REQUEST_ID_BAD_LOGIN int32 = -1
 	PADDING_TWO_BYTES    [2]byte
 )
@@ -56,6 +56,32 @@ func Dial(host string, port int, pass string) Client {
 func (c *Client) SendCommand(command string) string {
 	// Generate the binary packet.
 	packet := packetise(PACKET_TYPE_COMMAND, []byte(command))
+	// Send the packet.
+	response := c.sendPacket(packet)
+	resultPacket := dePacketise(response)
+	if resultPacket.RequestID == REQUEST_ID_BAD_LOGIN {
+		// Auth was bad, panic.
+		panic("NO AITH")
+	}
+	return string(resultPacket.Payload)
+}
+
+// Authenticate authenticates the user with the server.
+func (c *Client) Authenticate() {
+	// Generate the authentication packet.
+	packet := packetise(PACKET_TYPE_AUTH, []byte(c.password))
+	// Send the packet off to the server.
+	response := c.sendPacket(packet)
+	// Decode the return packet.
+	resultPacket := dePacketise(response)
+	if resultPacket.RequestID == REQUEST_ID_BAD_LOGIN {
+		// Auth was bad, panic.
+		panic("BAD AITH")
+	}
+}
+
+// sendPacket sends the binary packet representation to the server and returns the response.
+func (c *Client) sendPacket(packet []byte) []byte {
 	// Send the packet over the wire.
 	wn, err := c.connection.Write(packet)
 	if err != nil {
@@ -67,12 +93,6 @@ func (c *Client) SendCommand(command string) string {
 	if err != nil {
 		panic(err)
 	}
-	resultPacket := dePacketise(obuf)
-	if resultPacket.RequestID == REQUEST_ID_BAD_LOGIN {
-		// Auth was bad, panic.
-		panic("NO AITH")
-	}
-	return string(resultPacket.Payload)
 }
 
 // packetise encodes the packet type and payload into a binary representation to send over the wire.
