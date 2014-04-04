@@ -44,11 +44,13 @@ func Dial(host string, port int, pass string) Client {
 
 // SendCommand sends a command to the server and returns the result (often nothing).
 func (c *Client) SendCommand(command string) string {
+	// Because I'm lazy, just authenticate with every command.
+	c.Authenticate()
 	// Generate the binary packet.
 	packet := packetise(PACKET_TYPE_COMMAND, []byte(command))
 	// Send the packet.
 	response := c.sendPacket(packet)
-	head, payload := dePacketise(response)
+	head, payload := depacketise(response)
 	if head.RequestID == REQUEST_ID_BAD_LOGIN {
 		// Auth was bad, panic.
 		panic("NO AITH")
@@ -57,17 +59,17 @@ func (c *Client) SendCommand(command string) string {
 }
 
 // Authenticate authenticates the user with the server.
-func (c *Client) Authenticate() {
+func (c *Client) authenticate() {
 	// Generate the authentication packet.
 	packet := packetise(PACKET_TYPE_AUTH, []byte(c.password))
 	// Send the packet off to the server.
 	response := c.sendPacket(packet)
 	// Decode the return packet.
 	fmt.Println(response)
-	head, _ := dePacketise(response)
+	head, _ := depacketise(response)
 	if head.RequestID == REQUEST_ID_BAD_LOGIN {
 		// Auth was bad, panic.
-		panic("BAD AITH")
+		panic("BAD AUTH")
 	}
 }
 
@@ -76,7 +78,7 @@ func (c *Client) sendPacket(packet []byte) []byte {
 	// Send the packet over the wire.
 	_, err := c.connection.Write(packet)
 	if err != nil {
-		panic("WRTE FAIL")
+		panic("WRITE FAIL")
 	}
 	// Get a response.
 	out := make([]byte, 4096)
@@ -109,7 +111,7 @@ func packetise(t int32, p []byte) []byte {
 }
 
 // depacketise decodes the binary packet into a native Go struct.
-func dePacketise(raw []byte) (header, string) {
+func depacketise(raw []byte) (header, string) {
 	buf := bytes.NewBuffer(raw[:])
 	head := header{}
 	err := binary.Read(buf, binary.LittleEndian, &head)
