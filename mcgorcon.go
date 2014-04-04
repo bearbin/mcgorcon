@@ -7,7 +7,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"math/rand"
 	"net"
 	"time"
 )
@@ -87,12 +86,11 @@ func (c *Client) sendPacket(t packetType, p []byte) (header, []byte) {
 // packetise encodes the packet type and payload into a binary representation to send over the wire.
 func packetise(t packetType, p []byte) []byte {
 	// Generate a random request ID.
-	ID := requestID()
 	pad := [2]byte{}
 	length := int32(len(p) + 10)
 	var buf bytes.Buffer
 	binary.Write(&buf, binary.LittleEndian, length)
-	binary.Write(&buf, binary.LittleEndian, ID)
+	binary.Write(&buf, binary.LittleEndian, int32(0))
 	binary.Write(&buf, binary.LittleEndian, t)
 	binary.Write(&buf, binary.LittleEndian, p)
 	binary.Write(&buf, binary.LittleEndian, pad)
@@ -117,10 +115,4 @@ func depacketise(r io.Reader) (header, []byte) {
 		panic(err)
 	}
 	return head, payload[:len(payload)-2]
-}
-
-// requestID returns a random positive integer to use as the request ID for an RCON packet.
-func requestID() int32 {
-	// Return a non-negative integer to use as the packet ID.
-	return rand.Int31()
 }
