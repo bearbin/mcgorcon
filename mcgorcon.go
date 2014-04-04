@@ -15,20 +15,22 @@ import (
 
 type packetType int32
 
+// Client is a representation of an RCON client.
 type Client struct {
 	password   string
 	connection net.Conn
 }
 
+// header is the header of a Minecraft RCON packet.
 type header struct {
 	Size       int32
 	RequestID  int32
 	PacketType packetType
 }
 
-const PACKET_TYPE_COMMAND packetType = 2
-const PACKET_TYPE_AUTH packetType = 3
-const REQUEST_ID_BAD_LOGIN int32 = -1
+const packet_type_command packetType = 2
+const packet_type_auth packetType = 3
+const request_id_bad_login int32 = -1
 
 // Dial up the server and establish a RCON conneciton.
 func Dial(host string, port int, pass string) Client {
@@ -51,9 +53,9 @@ func (c *Client) SendCommand(command string) string {
 	// Because I'm lazy, just authenticate with every command.
 	c.authenticate()
 	// Send the packet.
-	head, payload := c.sendPacket(PACKET_TYPE_COMMAND, []byte(command))
+	head, payload := c.sendPacket(packet_type_command, []byte(command))
 	// Auth was bad, panic.
-	if head.RequestID == REQUEST_ID_BAD_LOGIN {
+	if head.RequestID == request_id_bad_login {
 		panic("NO AITH")
 	}
 	return string(payload)
@@ -62,9 +64,9 @@ func (c *Client) SendCommand(command string) string {
 // authenticate authenticates the user with the server.
 func (c *Client) authenticate() {
 	// Send the packet.
-	head, _ := c.sendPacket(PACKET_TYPE_AUTH, []byte(c.password))
+	head, _ := c.sendPacket(packet_type_auth, []byte(c.password))
 	// If the credentials were bad, panic.
-	if head.RequestID == REQUEST_ID_BAD_LOGIN {
+	if head.RequestID == request_id_bad_login {
 		panic("BAD AUTH")
 	}
 }
