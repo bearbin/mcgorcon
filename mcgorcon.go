@@ -65,7 +65,6 @@ func (c *Client) authenticate() {
 	// Send the packet off to the server.
 	response := c.sendPacket(packet)
 	// Decode the return packet.
-	fmt.Println(response)
 	head, _ := depacketise(response)
 	if head.RequestID == REQUEST_ID_BAD_LOGIN {
 		// Auth was bad, panic.
@@ -106,7 +105,6 @@ func packetise(t int32, p []byte) []byte {
 		panic("Packet too big when packetising.")
 	}
 	// Return the bytes.
-	fmt.Println(buf.Bytes())
 	return buf.Bytes()
 }
 
@@ -124,7 +122,5 @@ func depacketise(raw []byte) (header, string) {
 // requestID returns a random positive integer to use as the request ID for an RCON packet.
 func requestID() int32 {
 	// Return a non-negative integer to use as the packet ID.
-	id := rand.Int31()
-	fmt.Println("USING ID", id)
-	return id
+	return rand.Int31()
 }
