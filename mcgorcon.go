@@ -45,7 +45,7 @@ func Dial(host string, port int, pass string) Client {
 // SendCommand sends a command to the server and returns the result (often nothing).
 func (c *Client) SendCommand(command string) string {
 	// Because I'm lazy, just authenticate with every command.
-	c.Authenticate()
+	c.authenticate()
 	// Generate the binary packet.
 	packet := packetise(PACKET_TYPE_COMMAND, []byte(command))
 	// Send the packet.
@@ -58,7 +58,7 @@ func (c *Client) SendCommand(command string) string {
 	return payload
 }
 
-// Authenticate authenticates the user with the server.
+// authenticate authenticates the user with the server.
 func (c *Client) authenticate() {
 	// Generate the authentication packet.
 	packet := packetise(PACKET_TYPE_AUTH, []byte(c.password))
