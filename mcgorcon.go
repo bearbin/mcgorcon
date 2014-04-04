@@ -63,6 +63,7 @@ func (c *Client) Authenticate() {
 	// Send the packet off to the server.
 	response := c.sendPacket(packet)
 	// Decode the return packet.
+	fmt.Println(response)
 	head, _ := dePacketise(response)
 	if head.RequestID == REQUEST_ID_BAD_LOGIN {
 		// Auth was bad, panic.
@@ -78,12 +79,12 @@ func (c *Client) sendPacket(packet []byte) []byte {
 		panic("WRTE FAIL")
 	}
 	// Get a response.
-	var obuf []byte
-	_, err = c.connection.Read(obuf)
-	//if err != nil {
-	//	panic("RDE FAILE")
-	//}
-	return obuf
+	out := make([]byte, 4096)
+	n, err := c.connection.Read(out)
+	if err != nil {
+		panic(err)
+	}
+	return out[:n]
 }
 
 // packetise encodes the packet type and payload into a binary representation to send over the wire.
@@ -91,23 +92,19 @@ func packetise(t int32, p []byte) []byte {
 	// Generate a random request ID.
 	ID := requestID()
 	pad := [2]byte{}
+	length := int32(len(p) + 10)
 	var buf bytes.Buffer
+	binary.Write(&buf, binary.LittleEndian, length)
 	binary.Write(&buf, binary.LittleEndian, ID)
 	binary.Write(&buf, binary.LittleEndian, t)
 	binary.Write(&buf, binary.LittleEndian, p)
 	binary.Write(&buf, binary.LittleEndian, pad)
-	payload := buf.Bytes()
-	// Get the length of the payload.
-	length := int32(len(payload))
-	// Assemble the full buffer now.
-	buf.Reset()
-	binary.Write(&buf, binary.LittleEndian, length)
-	binary.Write(&buf, binary.LittleEndian, payload)
 	// Notchian server doesn't like big packets :(
 	if buf.Len() >= 1460 {
 		panic("Packet too big when packetising.")
 	}
 	// Return the bytes.
+	fmt.Println(buf.Bytes())
 	return buf.Bytes()
 }
 
@@ -115,15 +112,17 @@ func packetise(t int32, p []byte) []byte {
 func dePacketise(raw []byte) (header, string) {
 	buf := bytes.NewBuffer(raw[:])
 	head := header{}
-	_ = binary.Read(buf, binary.LittleEndian, &head)
-	//if err != nil {
-	//	panic(err)
-	//}
+	err := binary.Read(buf, binary.LittleEndian, &head)
+	if err != nil {
+		panic(err)
+	}
 	return head, buf.String()
 }
 
 // requestID returns a random positive integer to use as the request ID for an RCON packet.
 func requestID() int32 {
 	// Return a non-negative integer to use as the packet ID.
-	return rand.Int31()
+	id := rand.Int31()
+	fmt.Println("USING ID", id)
+	return id
 }
