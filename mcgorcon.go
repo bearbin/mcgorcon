@@ -1,4 +1,5 @@
 // mc-gorcon is a Minecraft RCON Client written in Go.
+// It is designed to be easy to use and integrate into your own applications.
 
 package mcgorcon
 
