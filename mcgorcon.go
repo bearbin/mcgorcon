@@ -1,4 +1,4 @@
-// mc-gorcon is a Minecraft RCON Client written in Go.
+// Package mcgorcon is a Minecraft RCON Client written in Go.
 // It is designed to be easy to use and integrate into your own applications.
 package mcgorcon
 
@@ -27,9 +27,9 @@ type header struct {
 	PacketType packetType
 }
 
-const packet_type_command packetType = 2
-const packet_type_auth packetType = 3
-const request_id_bad_login int32 = -1
+const packetTypeCommand packetType = 2
+const packetTypeAuth packetType = 3
+const requestIDBadLogin int32 = -1
 
 // Dial up the server and establish a RCON conneciton.
 func Dial(host string, port int, pass string) Client {
@@ -52,9 +52,9 @@ func (c *Client) SendCommand(command string) string {
 	// Because I'm lazy, just authenticate with every command.
 	c.authenticate()
 	// Send the packet.
-	head, payload := c.sendPacket(packet_type_command, []byte(command))
+	head, payload := c.sendPacket(packetTypeCommand, []byte(command))
 	// Auth was bad, panic.
-	if head.RequestID == request_id_bad_login {
+	if head.RequestID == requestIDBadLogin {
 		panic("NO AITH")
 	}
 	return string(payload)
@@ -63,9 +63,9 @@ func (c *Client) SendCommand(command string) string {
 // authenticate authenticates the user with the server.
 func (c *Client) authenticate() {
 	// Send the packet.
-	head, _ := c.sendPacket(packet_type_auth, []byte(c.password))
+	head, _ := c.sendPacket(packetTypeAuth, []byte(c.password))
 	// If the credentials were bad, panic.
-	if head.RequestID == request_id_bad_login {
+	if head.RequestID == requestIDBadLogin {
 		panic("BAD AUTH")
 	}
 }
