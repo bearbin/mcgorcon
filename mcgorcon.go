@@ -20,11 +20,10 @@ type Client struct {
 	connection net.Conn
 }
 
-type packet struct {
+type header struct {
 	Size       int32
 	RequestID  int32
 	PacketType int32
-	Payload    []byte
 }
 
 // Dial up the server and establish a RCON conneciton.
@@ -49,12 +48,12 @@ func (c *Client) SendCommand(command string) string {
 	packet := packetise(PACKET_TYPE_COMMAND, []byte(command))
 	// Send the packet.
 	response := c.sendPacket(packet)
-	resultPacket := dePacketise(response)
-	if resultPacket.RequestID == REQUEST_ID_BAD_LOGIN {
+	head, payload := dePacketise(response)
+	if head.RequestID == REQUEST_ID_BAD_LOGIN {
 		// Auth was bad, panic.
 		panic("NO AITH")
 	}
-	return string(resultPacket.Payload)
+	return payload
 }
 
 // Authenticate authenticates the user with the server.
@@ -64,8 +63,8 @@ func (c *Client) Authenticate() {
 	// Send the packet off to the server.
 	response := c.sendPacket(packet)
 	// Decode the return packet.
-	resultPacket := dePacketise(response)
-	if resultPacket.RequestID == REQUEST_ID_BAD_LOGIN {
+	head, _ := dePacketise(response)
+	if head.RequestID == REQUEST_ID_BAD_LOGIN {
 		// Auth was bad, panic.
 		panic("BAD AITH")
 	}
@@ -113,15 +112,14 @@ func packetise(t int32, p []byte) []byte {
 }
 
 // depacketise decodes the binary packet into a native Go struct.
-func dePacketise(raw []byte) packet {
-	buf := bytes.NewBuffer([]byte(raw[:]))
-	pack := packet{}
-	err := binary.Read(buf, binary.LittleEndian, &pack)
-	if err != nil {
-		panic(err)
-	}
-	pack.Payload = pack.Payload[:len(pack.Payload)-2]
-	return pack
+func dePacketise(raw []byte) (header, string) {
+	buf := bytes.NewBuffer(raw[:])
+	head := header{}
+	_ = binary.Read(buf, binary.LittleEndian, &head)
+	//if err != nil {
+	//	panic(err)
+	//}
+	return head, buf.String()
 }
 
 // requestID returns a random positive integer to use as the request ID for an RCON packet.
