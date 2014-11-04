@@ -63,7 +63,7 @@ func (c *Client) SendCommand(command string) (string, error) {
 
 	// Auth was bad, throw error.
 	if head.RequestID == requestIDBadLogin {
-		return "", errors.New("NO AITH")
+		return "", errors.New("Bad auth, could not send command.")
 	}
 	return string(payload), nil
 }
@@ -78,7 +78,7 @@ func (c *Client) authenticate() error {
 
 	// If the credentials were bad, throw error.
 	if head.RequestID == requestIDBadLogin {
-		return errors.New("BAD AUTH")
+		return errors.New("Bad auth, could not authenticate.")
 	}
 
 	return nil
